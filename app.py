@@ -9,7 +9,6 @@ import anthropic
 
 app = Flask(__name__)
 
-# ── CONOCIMIENTO DEL GIMNASIO ──
 SYSTEM_PROMPT = """Eres el asistente virtual de Stay Hungry Gym, un gimnasio en Guatemala.
 Tu trabajo es responder preguntas de clientes potenciales y actuales de forma amigable, 
 clara y concisa. Siempre responde en español.
@@ -40,18 +39,28 @@ HORARIOS DE SAUNA:
 - Domingo: 8:00-12:00
 Nota: Los horarios del sauna pueden cambiar según afluencia o decisión de administración.
 
+ASUETOS Y DÍAS FESTIVOS:
+En días de asueto los horarios pueden variar o el gimnasio puede cerrar. Para saber
+si habrá cambios en un asueto específico, recomienda seguir la cuenta @stayhungrygym
+donde se publican los avisos oficiales, o escribir al gimnasio con anticipación para confirmar.
+
+CANCELACIONES DE MEMBRESÍA:
+La cancelación de membresía es un proceso PRESENCIAL. El socio debe ir personalmente
+al gimnasio para realizarla. No se acepta cancelación por WhatsApp, llamada ni ningún
+otro medio. Si preguntan por cancelación, indícales claramente que deben ir en persona.
+
 REDES SOCIALES: @stayhungrygym
 
 REGLAS IMPORTANTES PARA TUS RESPUESTAS:
 1. Sé amigable y motivador, como corresponde a un gimnasio.
-2. Si te preguntan algo que no está en tu información (horario de apertura general, 
-   dirección, estacionamiento, etc.), di: "Para esa información, te recomiendo 
-   contactar directamente al gimnasio por este mismo WhatsApp o visitar nuestra 
+2. Si te preguntan algo que no está en tu información (horario de apertura general,
+   dirección, estacionamiento, etc.), di: "Para esa información, te recomiendo
+   contactar directamente al gimnasio por este mismo WhatsApp o visitar nuestra
    cuenta @stayhungrygym."
 3. Nunca inventes información que no tengas.
 4. Respuestas cortas y directas. Máximo 3-4 líneas por respuesta.
 5. Usa emojis con moderación (1-2 por mensaje máximo).
-6. Si alguien quiere inscribirse, diles: "¡Excelente decisión! 💪 Para completar 
+6. Si alguien quiere inscribirse, diles: "¡Excelente decisión! Para completar
    tu inscripción, escríbenos aquí mismo y un asesor te atenderá personalmente."
 """
 
@@ -59,7 +68,6 @@ client_anthropic = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    """Recibe mensajes de WhatsApp via Twilio y responde con Claude"""
     mensaje_entrante = request.form.get("Body", "").strip()
     numero_usuario = request.form.get("From", "")
 
@@ -67,12 +75,12 @@ def webhook():
 
     if not mensaje_entrante:
         resp = MessagingResponse()
-        resp.message("Hola 👋 Soy el asistente virtual de Stay Hungry Gym. ¿En qué te puedo ayudar?")
+        resp.message("Hola! Soy el asistente virtual de Stay Hungry Gym. En que te puedo ayudar?")
         return str(resp)
 
     try:
         respuesta_claude = client_anthropic.messages.create(
-            model="claude-haiku-4-5-20251001",  # Haiku: rápido y barato para este caso
+            model="claude-haiku-4-5-20251001",
             max_tokens=300,
             system=SYSTEM_PROMPT,
             messages=[
@@ -83,7 +91,7 @@ def webhook():
 
     except Exception as e:
         print(f"[Error Claude] {e}")
-        texto_respuesta = "Disculpa, tuve un problema técnico. Por favor intenta de nuevo en un momento. 🙏"
+        texto_respuesta = "Disculpa, tuve un problema tecnico. Por favor intenta de nuevo en un momento."
 
     print(f"[Respuesta enviada] {texto_respuesta}")
 
@@ -93,7 +101,7 @@ def webhook():
 
 @app.route("/", methods=["GET"])
 def health():
-    return "Stay Hungry Gym Agent — Activo ✅", 200
+    return "Stay Hungry Gym Agent — Activo", 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
